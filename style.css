@@ -17,10 +17,10 @@ body {
 
 #game-container {
     position: relative;
-    width: 800px;
-    height: 450px;
+    width: 100vw;
+    height: 100vh;
     background: linear-gradient(180deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
-    border-radius: 12px;
+    border-radius: 0px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     overflow: hidden;
 }

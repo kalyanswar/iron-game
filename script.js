@@ -1,6 +1,13 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
 // --- UI Elements ---
 const hud = document.getElementById('hud');
 const energyFill = document.getElementById('energy-fill');
@@ -143,7 +150,7 @@ let dialogues = [];
 let endGoal = null;
 
 const player = {
-    x: 100, y: 100, width: 48, height: 48,
+    x: 100, y: 100, width: 72, height: 72,
     vx: 0, vy: 0,
     speed: 5, jumpForce: -12,
     grounded: false, coyoteTimer: 0, maxCoyoteTime: 8,
@@ -356,8 +363,8 @@ function loadLevel(index) {
     ironEnergy = 80; // Start higher so players have more time
     
     // Initialize Camera
-    cameraX = player.x - 400;
-    cameraY = player.y - 250; 
+    cameraX = player.x - canvas.width / 2;
+    cameraY = player.y - canvas.height / 2; 
 
     // Load data
     platforms = [...data.platforms];
@@ -504,15 +511,15 @@ function updatePhysics() {
     player.y += player.vy;
 
     // HORIZONTAL CAMERA TRACKING
-    if (player.x - cameraX > 500) cameraX = player.x - 500;
-    if (player.x - cameraX < 200) cameraX = player.x - 200;
-    if (cameraX < levels[currentLevelIndex].startPos.x - 300) {
-        cameraX = levels[currentLevelIndex].startPos.x - 300;
+    if (player.x - cameraX > canvas.width * 0.6) cameraX = player.x - canvas.width * 0.6;
+    if (player.x - cameraX < canvas.width * 0.25) cameraX = player.x - canvas.width * 0.25;
+    if (cameraX < levels[currentLevelIndex].startPos.x - canvas.width * 0.375) {
+        cameraX = levels[currentLevelIndex].startPos.x - canvas.width * 0.375;
     }
 
     // VERTICAL CAMERA TRACKING
-    if (player.y - cameraY > 250) cameraY = player.y - 250;
-    if (player.y - cameraY < 150) cameraY = player.y - 150;
+    if (player.y - cameraY > canvas.height * 0.55) cameraY = player.y - canvas.height * 0.55;
+    if (player.y - cameraY < canvas.height * 0.33) cameraY = player.y - canvas.height * 0.33;
 
     // Platform Collisions
     player.grounded = false;
@@ -751,17 +758,31 @@ function draw() {
 }
 
 // --- Main Loop ---
-function loop() {
-    if (gameState === 'playing' || gameState === 'dialogue') {
-        if (gameState === 'playing') {
-            updateIronMechanic();
-            if (!player.grounded) player.coyoteTimer--;
-            updatePhysics();
-            updateEntities();
-        }
-        draw();
-    }
+let lastTime = 0;
+const fps = 60;
+const fpsInterval = 1000 / fps;
+
+function loop(currentTime) {
     requestAnimationFrame(loop);
+    
+    if (lastTime === 0) {
+        lastTime = currentTime;
+    }
+    
+    const elapsed = currentTime - lastTime;
+    if (elapsed > fpsInterval) {
+        lastTime = currentTime - (elapsed % fpsInterval);
+
+        if (gameState === 'playing' || gameState === 'dialogue') {
+            if (gameState === 'playing') {
+                updateIronMechanic();
+                if (!player.grounded) player.coyoteTimer--;
+                updatePhysics();
+                updateEntities();
+            }
+            draw();
+        }
+    }
 }
 
 // --- Button Hooks ---
@@ -772,4 +793,4 @@ btnPlayAgain.addEventListener('click', () => { SoundEngine.init(); loadLevel(0);
 
 // Kick off
 changeState('title');
-loop();
+requestAnimationFrame(loop);
