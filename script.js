@@ -112,31 +112,53 @@ window.addEventListener('keyup', (e) => {
 });
 
 // Mobile Controls
-document.getElementById('btn-jump').addEventListener('touchstart', (e) => { 
-    e.preventDefault(); 
+// Prevent all default touch behavior (scrolling, zooming, bouncing)
+document.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
+document.addEventListener('touchmove', (e) => { e.preventDefault(); }, { passive: false });
+
+const joystickZone = document.getElementById('joystick-zone');
+const joystickStick = document.getElementById('joystick-stick');
+const joystickBase = document.getElementById('joystick-base');
+const btnJump = document.getElementById('btn-jump');
+
+btnJump.addEventListener('touchstart', (e) => { 
+    e.stopPropagation();
     SoundEngine.init(); 
     handleJump(); 
 });
 
 function handleJoystickEvent(e) {
     const touch = e.touches[0];
-    const rect = e.target.getBoundingClientRect();
-    if(touch.clientX > rect.left + rect.width/2) {
+    // Always use the joystick-zone element for bounds, not the touched child
+    const rect = joystickBase.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    
+    if(touch.clientX > centerX) {
         keys.right = true; keys.left = false;
     } else {
         keys.left = true; keys.right = false;
     }
+    
+    // Move the visual stick to reflect touch position
+    const clampedX = Math.max(rect.left, Math.min(touch.clientX, rect.right));
+    const offsetX = ((clampedX - rect.left) / rect.width) * 100;
+    joystickStick.style.left = offsetX + '%';
 }
 
-document.getElementById('joystick-zone').addEventListener('touchstart', (e) => {
-    e.preventDefault();
+joystickZone.addEventListener('touchstart', (e) => {
+    e.stopPropagation();
     handleJoystickEvent(e);
 });
-document.getElementById('joystick-zone').addEventListener('touchmove', (e) => {
-    e.preventDefault();
+joystickZone.addEventListener('touchmove', (e) => {
+    e.stopPropagation();
     handleJoystickEvent(e);
 });
-document.getElementById('joystick-zone').addEventListener('touchend', () => { keys.right = false; keys.left = false; });
+joystickZone.addEventListener('touchend', (e) => {
+    e.stopPropagation();
+    keys.right = false; keys.left = false;
+    joystickStick.style.left = '50%';
+});
+dialogueBox.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); if (gameState === 'dialogue') advanceDialogue(); }, {passive: false});
 dialogueBox.addEventListener('click', () => { if (gameState === 'dialogue') advanceDialogue(); });
 
 // --- Sprite Processing ---
@@ -838,10 +860,15 @@ function loop(currentTime) {
 }
 
 // --- Button Hooks ---
-btnStart.addEventListener('click', () => { SoundEngine.init(); loadLevel(0); });
-btnNextLevel.addEventListener('click', () => { loadLevel(currentLevelIndex + 1); });
-btnRestart.addEventListener('click', () => { loadLevel(currentLevelIndex); });
-btnPlayAgain.addEventListener('click', () => { SoundEngine.init(); loadLevel(0); });
+function addActionControl(btn, action) {
+    btn.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); action(); }, {passive: false});
+    btn.addEventListener('click', action);
+}
+
+addActionControl(btnStart, () => { SoundEngine.init(); loadLevel(0); });
+addActionControl(btnNextLevel, () => { loadLevel(currentLevelIndex + 1); });
+addActionControl(btnRestart, () => { loadLevel(currentLevelIndex); });
+addActionControl(btnPlayAgain, () => { SoundEngine.init(); loadLevel(0); });
 
 // Kick off
 changeState('title');
