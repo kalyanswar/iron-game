@@ -59,13 +59,34 @@
 
         <div id="level-complete-screen" class="overlay hidden">
             <h1>Stage Clear!</h1>
-            <p id="level-stats">Iron Maintained: 100%</p>
+            
+            <div id="star-container">
+                <span class="star" id="star-1">★</span>
+                <span class="star" id="star-2">★</span>
+                <span class="star" id="star-3">★</span>
+            </div>
+
+            <div class="reward-box">
+                <p id="level-stats">Iron Maintained: 100%</p>
+                <p id="level-orbs-stats">Orbs Collected: 0</p>
+            </div>
+            
             <button id="btn-next-level" class="primary-btn">Next Level</button>
         </div>
 
         <div id="victory-screen" class="overlay hidden">
             <h1 class="win-text">You Saved the World!</h1>
-            <p>You defeated the Anaemia Shadow by fueling your body with Iron!</p>
+            
+            <div id="rank-container">
+                <h2>Final Grade</h2>
+                <div id="final-rank">S</div>
+            </div>
+
+            <div class="reward-box">
+                <p>You defeated the Anaemia Shadow by fueling your body with Iron!</p>
+                <p id="total-orbs-stats">Total Orbs: 0 / 0</p>
+            </div>
+            
             <button id="btn-play-again" class="primary-btn">Play Again</button>
         </div>
 

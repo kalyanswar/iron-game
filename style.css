@@ -196,6 +196,89 @@ canvas {
 }
 
 
+/* Rewards UI */
+#star-container {
+    display: flex;
+    gap: 15px;
+    margin: 15px 0 25px 0;
+}
+
+.star {
+    font-size: 60px;
+    color: #444; /* Dimmed initially */
+    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    transform: scale(0);
+    opacity: 0;
+}
+
+.star.active {
+    color: #ffd700;
+    text-shadow: 0 0 20px #ffea00, 0 0 40px #ff9100;
+    animation: starPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.star.active:nth-child(2) { animation-delay: 0.2s; }
+.star.active:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes starPop {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    50% { transform: scale(1.3) rotate(10deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.reward-box {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 20px 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.reward-box p {
+    margin-bottom: 10px !important;
+    font-size: 20px;
+    font-weight: 700;
+}
+.reward-box p:last-child { margin-bottom: 0 !important; }
+
+#rank-container {
+    text-align: center;
+    margin: 10px 0 25px 0;
+}
+
+#rank-container h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #ccc;
+}
+
+#final-rank {
+    font-size: 100px;
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rankPulse 2s infinite alternate;
+}
+
+#final-rank.rank-s { background: linear-gradient(135deg, #00C9FF, #92FE9D); text-shadow: 0 0 40px #00C9FF; }
+#final-rank.rank-a { background: linear-gradient(135deg, #FFD700, #FFA500); }
+#final-rank.rank-b { background: linear-gradient(135deg, #f77062, #fe5196); }
+#final-rank.rank-c { background: linear-gradient(135deg, #8e9eab, #eef2f3); }
+
+@keyframes rankPulse {
+    from { transform: scale(1); filter: brightness(1); }
+    to { transform: scale(1.05); filter: brightness(1.3); }
+}
+
+
 /* Overlays (Title, Game Over, Success, Victory) */
 .overlay {
     position: absolute;
@@ -238,10 +321,12 @@ button.error-btn:hover { transform: scale(1.05); }
     position: absolute; bottom: 20px; left: 20px; right: 20px;
     justify-content: space-between; pointer-events: none; z-index: 10; display: none;
 }
-#mobile-controls.visible { display: none; }
+#mobile-controls.hidden { display: none !important; }
 @media (max-width: 850px) {
-    #game-container { width: 100%; height: 100vh; border-radius: 0; }
-    #mobile-controls.visible { display: flex; }
+    #mobile-controls { display: flex; }
+}
+@media (min-width: 851px) {
+    #mobile-controls { display: none !important; }
 }
 
 #joystick-zone { width: 150px; height: 150px; position: relative; pointer-events: auto; }

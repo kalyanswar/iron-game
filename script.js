@@ -20,6 +20,13 @@ const gameOverScreen = document.getElementById('game-over-screen');
 const victoryScreen = document.getElementById('victory-screen');
 const levelStats = document.getElementById('level-stats');
 
+const star1 = document.getElementById('star-1');
+const star2 = document.getElementById('star-2');
+const star3 = document.getElementById('star-3');
+const levelOrbsStats = document.getElementById('level-orbs-stats');
+const totalOrbsStats = document.getElementById('total-orbs-stats');
+const finalRankEl = document.getElementById('final-rank');
+
 const dialogueBox = document.getElementById('dialogue-box');
 const dialoguePortrait = document.getElementById('dialogue-portrait');
 const dialogueName = document.getElementById('dialogue-name');
@@ -71,13 +78,17 @@ let cameraY = 0;
 let feScore = 0;
 let ironEnergy = 100;
 
+// Tracking System additions
+let levelFeScore = 0;
+let totalPossibleOrbs = 0;
+
 // Dialogue State
 let currentDialogueSequence = null;
 let currentDialogueLineIndex = 0;
 
 // --- Physics Constants ---
-const GRAVITY = 0.6;
-const MAX_FALL_SPEED = 12;
+const GRAVITY = 1.35;
+const MAX_FALL_SPEED = 18;
 
 // --- Input Handling ---
 const keys = { right: false, left: false, up: false };
@@ -106,12 +117,24 @@ document.getElementById('btn-jump').addEventListener('touchstart', (e) => {
     SoundEngine.init(); 
     handleJump(); 
 });
-document.getElementById('joystick-zone').addEventListener('touchstart', (e) => {
-    e.preventDefault();
+
+function handleJoystickEvent(e) {
     const touch = e.touches[0];
     const rect = e.target.getBoundingClientRect();
-    if(touch.clientX > rect.left + rect.width/2) keys.right = true;
-    else keys.left = true;
+    if(touch.clientX > rect.left + rect.width/2) {
+        keys.right = true; keys.left = false;
+    } else {
+        keys.left = true; keys.right = false;
+    }
+}
+
+document.getElementById('joystick-zone').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    handleJoystickEvent(e);
+});
+document.getElementById('joystick-zone').addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    handleJoystickEvent(e);
 });
 document.getElementById('joystick-zone').addEventListener('touchend', () => { keys.right = false; keys.left = false; });
 dialogueBox.addEventListener('click', () => { if (gameState === 'dialogue') advanceDialogue(); });
@@ -152,7 +175,7 @@ let endGoal = null;
 const player = {
     x: 100, y: 100, width: 72, height: 72,
     vx: 0, vy: 0,
-    speed: 5, jumpForce: -12,
+    speed: 7.5, jumpForce: -18,
     grounded: false, coyoteTimer: 0, maxCoyoteTime: 8,
     hasDoubleJump: false, canDoubleJump: false,
     facingRight: true,
@@ -191,7 +214,7 @@ const levels = [
             {x: 2200, y: 300, type: 'spinach'}
         ],
         enemies: [
-            {type: 'slime', x: 1200, y: 360, w: 60, h: 40, vx: 1.5, minX: 1100, maxX: 1500}
+            {type: 'slime', x: 1200, y: 360, w: 60, h: 40, vx: 2.25, minX: 1100, maxX: 1500}
         ],
         dialogues: [
             {
@@ -258,7 +281,7 @@ const levels = [
         // Solid continuous ground with small gaps
         for(let i=0; i<=4200; i+=600) {
             level.platforms.push({x: i, y: 400, w: 450, h: 50, color: '#789'});
-            level.enemies.push({type: 'slime', x: i+200, y: 360, w: 60, h: 40, vx: 2, minX: i+50, maxX: i+400});
+            level.enemies.push({type: 'slime', x: i+200, y: 360, w: 60, h: 40, vx: 3, minX: i+50, maxX: i+400});
             level.enemies.push({type: 'bat', x: i+500, y: 200, startY: 200, w: 40, h: 20});
             level.orbs.push({x: i+300, y: 350});
         }
@@ -307,7 +330,7 @@ const levels = [
             if (i % 800 === 0) {
                  level.enemies.push({type: 'spike', x: i + 80, y: 410 + Math.sin(i)*50, w: 40, h: 40});
             } else {
-                 level.enemies.push({type: 'slime', x: i + 50, y: 410 + Math.sin(i)*50, w: 60, h: 40, vx: 1, minX: i, maxX: i+150});
+                 level.enemies.push({type: 'slime', x: i + 50, y: 410 + Math.sin(i)*50, w: 60, h: 40, vx: 1.5, minX: i, maxX: i+150});
             }
 
             if(i % 1200 === 0) level.items.push({x: i+50, y: 350, type: 'spinach'});
@@ -327,7 +350,7 @@ const levels = [
         // Massive Gauntlet Generator (Slimes, Bats, and Spikes all at once!)
         for(let i=600; i<4800; i+= 300) {
             // Slime layer
-            level.enemies.push({type: 'slime', x: i, y: 360, w: 60, h: 40, vx: (Math.random() > 0.5 ? 2 : -2), minX: i-100, maxX: i+100});
+            level.enemies.push({type: 'slime', x: i, y: 360, w: 60, h: 40, vx: (Math.random() > 0.5 ? 3 : -3), minX: i-100, maxX: i+100});
             // Bat layer hovering high
             level.enemies.push({type: 'bat', x: i+150, y: 200, startY: 200, w: 40, h: 20});
             // Occasional Spike wall
@@ -355,6 +378,11 @@ function loadLevel(index) {
     }
     const data = levels[index];
     currentLevelIndex = index;
+    levelFeScore = 0;
+    
+    if (index === 0 && totalPossibleOrbs === 0) {
+        levels.forEach(l => { totalPossibleOrbs += l.orbs.length; });
+    }
     
     // Reset player
     player.x = data.startPos.x;
@@ -395,10 +423,7 @@ function changeState(newState) {
     victoryScreen.classList.add('hidden');
     hud.classList.add('hidden');
     dialogueBox.classList.add('hidden');
-    
-    if (mobileControls.style.display !== 'none' && window.innerWidth <= 850) {
-        mobileControls.classList.add('hidden');
-    }
+    mobileControls.classList.add('hidden');
 
     if (newState === 'title') {
         titleScreen.classList.remove('hidden');
@@ -406,7 +431,7 @@ function changeState(newState) {
         feScoreEl.innerText = feScore;
     } else if (newState === 'playing') {
         hud.classList.remove('hidden');
-        if (window.innerWidth <= 850) mobileControls.classList.remove('hidden');
+        mobileControls.classList.remove('hidden');
     } else if (newState === 'dialogue') {
         hud.classList.remove('hidden');
         dialogueBox.classList.remove('hidden');
@@ -414,10 +439,36 @@ function changeState(newState) {
         player.vx = 0; 
     } else if (newState === 'level_complete') {
         levelStats.innerText = `Iron Maintained: ${Math.floor(ironEnergy)}%`;
+        levelOrbsStats.innerText = `Orbs Collected: ${levelFeScore}`;
+        
+        star1.classList.remove('active');
+        star2.classList.remove('active');
+        star3.classList.remove('active');
+        
+        // Force reflow to restart CSS animations reliably
+        void star1.offsetWidth; 
+        
+        if (ironEnergy > 0) star1.classList.add('active'); 
+        if (ironEnergy >= 40) star2.classList.add('active'); 
+        if (ironEnergy >= 80) star3.classList.add('active'); 
+
         levelCompleteScreen.classList.remove('hidden');
     } else if (newState === 'game_over') {
         gameOverScreen.classList.remove('hidden');
     } else if (newState === 'victory') {
+        totalOrbsStats.innerText = `Total Orbs: ${feScore} / ${totalPossibleOrbs}`;
+        
+        let ratio = totalPossibleOrbs > 0 ? (feScore / totalPossibleOrbs) : 1;
+        let finalChar = 'C';
+        let rankClass = 'rank-c';
+        
+        if (ratio >= 0.9) { finalChar = 'S'; rankClass = 'rank-s'; }
+        else if (ratio >= 0.7) { finalChar = 'A'; rankClass = 'rank-a'; }
+        else if (ratio >= 0.4) { finalChar = 'B'; rankClass = 'rank-b'; }
+
+        finalRankEl.innerText = finalChar;
+        finalRankEl.className = rankClass;
+
         victoryScreen.classList.remove('hidden');
     }
 }
@@ -476,24 +527,24 @@ function handleJump() {
 }
 
 function updateIronMechanic() {
-    ironEnergy -= 0.04; 
+    ironEnergy -= 0.06; 
     if (ironEnergy < 0) ironEnergy = 0;
     
     energyFill.style.width = ironEnergy + '%';
     
     if (ironEnergy < 30) {
-        player.speed = 4; player.jumpForce = -11;
+        player.speed = 6; player.jumpForce = -16.5;
         energyFill.style.background = '#888';
         player.hasDoubleJump = false;
     } else if (ironEnergy < 80) {
-        player.speed = 5; player.jumpForce = -12;
+        player.speed = 7.5; player.jumpForce = -18;
         energyFill.style.background = 'linear-gradient(90deg, #ff416c, #ff4b2b)';
         player.hasDoubleJump = false;
     } else {
-        player.speed = 7; player.jumpForce = -14.5;
+        player.speed = 10.5; player.jumpForce = -21.75;
         energyFill.style.background = '#ffeb3b';
         player.hasDoubleJump = true;
-        player.auraRadius = Math.sin(Date.now() / 100) * 8 + 15;
+        player.auraRadius = Math.sin(Date.now() / 66) * 8 + 15;
     }
 
     if (ironEnergy === 0) changeState('game_over');
@@ -563,6 +614,7 @@ function updateEntities() {
         if (Math.sqrt(dx*dx + dy*dy) < orb.r + player.width/2) {
             orb.active = false;
             feScore++;
+            levelFeScore++;
             feScoreEl.innerText = feScore;
             ironEnergy = Math.min(100, ironEnergy + 15);
             SoundEngine.orb();
@@ -591,7 +643,7 @@ function updateEntities() {
             if (e.x < e.minX || e.x > e.maxX) e.vx *= -1; 
         } else if (e.type === 'bat') {
             // Hover up and down endlessly based on time
-            e.y = e.startY + Math.sin(Date.now() / 200 + e.x) * 50; 
+            e.y = e.startY + Math.sin(Date.now() / 133 + e.x) * 50; 
         }
         // e.type === 'spike' does nothing (static)
 
@@ -601,8 +653,8 @@ function updateEntities() {
             
             if (e.type === 'spike') {
                 ironEnergy -= 20; 
-                player.vy = -8;
-                player.vx = (player.x < e.x) ? -10 : 10;
+                player.vy = -12;
+                player.vx = (player.x < e.x) ? -15 : 15;
                 player.x += player.vx;
                 triggerTooltip("Ouch! Candy Spikes!");
                 SoundEngine.hurt();
@@ -611,12 +663,12 @@ function updateEntities() {
                 if (ironEnergy >= 80) {
                     e.active = false;
                     triggerTooltip("Smashed the Enemy!");
-                    player.vy = -8;
+                    player.vy = -12;
                     SoundEngine.smash();
                 } else {
                     ironEnergy -= 30; // Fair penalty
-                    player.vy = -6;
-                    player.vx = (player.x < e.x) ? -15 : 15;
+                    player.vy = -9;
+                    player.vx = (player.x < e.x) ? -22.5 : 22.5;
                     player.x += player.vx;
                     e.active = false; 
                     triggerTooltip("Drained Energy!");
