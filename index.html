@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iron Quest: The Anaemia Adventure</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <!-- The Game Canvas -->
+        <canvas id="gameCanvas" width="800" height="450"></canvas>
+
+        <!-- HUD -->
+        <div id="hud" class="hidden">
+            <div class="hud-item energy-bar-container">
+                <div class="hud-label">IRON ENERGY</div>
+                <div id="energy-bar">
+                    <div id="energy-fill"></div>
+                </div>
+            </div>
+            <div class="hud-item fe-counter">
+                Fe: <span id="fe-score">0</span>
+            </div>
+        </div>
+        
+        <!-- Action Tooltip -->
+        <div id="action-tooltip">SPINACH! Strength UP!</div>
+
+        <!-- Mobile Controls (hidden on wider screens by default) -->
+        <div id="mobile-controls" class="hidden">
+            <div id="joystick-zone">
+                <div id="joystick-base">
+                    <div id="joystick-stick"></div>
+                </div>
+            </div>
+            <div id="action-buttons">
+                <button id="btn-jump">JUMP</button>
+            </div>
+        </div>
+        
+        <!-- Dialogue System Overlay -->
+        <div id="dialogue-box" class="hidden">
+            <div id="dialogue-portrait"></div>
+            <div id="dialogue-content">
+                <h3 id="dialogue-name">Dr. Cee</h3>
+                <p id="dialogue-text">Watch out for the sugar crash!</p>
+                <div id="dialogue-prompt">Click or Press SPACE to continue...</div>
+            </div>
+        </div>
+
+        <!-- Overlays -->
+        <div id="title-screen" class="overlay">
+            <h1 class="bounce-text">IRON QUEST</h1>
+            <h2>The Anaemia Adventure</h2>
+            <button id="btn-start" class="primary-btn">Start Game</button>
+        </div>
+
+        <div id="level-complete-screen" class="overlay hidden">
+            <h1>Stage Clear!</h1>
+            <p id="level-stats">Iron Maintained: 100%</p>
+            <button id="btn-next-level" class="primary-btn">Next Level</button>
+        </div>
+
+        <div id="victory-screen" class="overlay hidden">
+            <h1 class="win-text">You Saved the World!</h1>
+            <p>You defeated the Anaemia Shadow by fueling your body with Iron!</p>
+            <button id="btn-play-again" class="primary-btn">Play Again</button>
+        </div>
+
+        <div id="game-over-screen" class="overlay hidden">
+            <h1>Shadows Took Over!</h1>
+            <p>Your Iron Energy was depleted. Look for green Spinach and yellow Fe Orbs!</p>
+            <button id="btn-restart" class="error-btn">Try Again</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
